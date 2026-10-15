@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Workbase - College Geofence Setup{% endblock %}
+
+{% block content %}
+<div style="max-width: 580px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2 class="card-title">College Geofence Configuration</h2>
+                <p class="card-subtitle">Set your campus coordinates and acceptable attendance radius</p>
+            </div>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary btn-sm">← Back to Dashboard</a>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.setup') }}">
+            <div class="form-group">
+                <label for="admin_email">Admin Email (Contact / Login)</label>
+                <input type="email" id="admin_email" name="admin_email" value="{{ settings.admin_email if settings else '' }}" placeholder="admin@college.edu" required>
+            </div>
+
+            <div class="form-group">
+                <label for="college_name">College / Campus Name</label>
+                <input type="text" id="college_name" name="college_name" value="{{ settings.college_name if settings else '' }}" placeholder="e.g. Vaigai Engineering Campus" required>
+            </div>
+
+            <div style="margin: 15px 0;">
+                <button type="button" id="getLocationBtn" class="btn btn-primary btn-sm">📍 Auto-Detect Current GPS Coordinates</button>
+                <p class="form-help">Click to auto-populate your current latitude and longitude using your browser.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="latitude">Latitude (Center Point)</label>
+                    <input type="text" id="latitude" step="any" name="latitude" value="{{ settings.latitude if settings else '' }}" placeholder="e.g. 13.0827" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="longitude">Longitude (Center Point)</label>
+                    <input type="text" id="longitude" step="any" name="longitude" value="{{ settings.longitude if settings else '' }}" placeholder="e.g. 80.2707" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="radius_meters">Acceptable Geofence Radius (in meters)</label>
+                <input type="number" id="radius_meters" name="radius_meters" value="{{ settings.radius_meters if settings else '100' }}" min="1" step="any" required>
+                <p class="form-help">Students must be within this distance from the center point to mark attendance.</p>
+            </div>
+
+            <button type="submit" class="btn btn-success btn-block" style="margin-top: 10px;">💾 Save Configuration</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='geolocation.js') }}"></script>
+{% endblock %}

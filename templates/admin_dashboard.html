@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Workbase - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="card-header" style="border: none; padding-bottom: 0;">
+    <div>
+        <h1 class="card-title" style="font-size: 1.6rem;">Admin Dashboard</h1>
+        <p class="card-subtitle">Manage college geofencing, student roster, and daily attendance records</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <a href="{{ url_for('admin.setup') }}" class="btn btn-secondary btn-sm">⚙️ Geofence Settings</a>
+        <a href="{{ url_for('auth.login') }}" target="_blank" class="btn btn-primary btn-sm">🔗 Open Student Login</a>
+    </div>
+</div>
+
+<!-- Quick Statistics Grid -->
+<div class="grid-3">
+    <div class="stat-box">
+        <div class="stat-label">Campus Configuration</div>
+        <div class="stat-value" style="font-size: 1.25rem;">
+            {{ settings.college_name if settings else 'Not Configured' }}
+        </div>
+        <p class="form-help" style="margin-top: 4px;">
+            {% if settings %}
+                Radius: <strong>{{ settings.radius_meters }}m</strong> &bull; GPS: {{ "%.4f"|format(settings.latitude) }}, {{ "%.4f"|format(settings.longitude) }}
+            {% else %}
+                <a href="{{ url_for('admin.setup') }}" style="color: var(--primary);">Configure Campus Geofence →</a>
+            {% endif %}
+        </p>
+    </div>
+
+    <div class="stat-box" style="border-left-color: #0284c7;">
+        <div class="stat-label">Total Registered Students</div>
+        <div class="stat-value">{{ total_students }}</div>
+        <p class="form-help" style="margin-top: 4px;">Imported from CSV roster</p>
+    </div>
+
+    <div class="stat-box" style="border-left-color: #16a34a;">
+        <div class="stat-label">Present Today ({{ today }})</div>
+        <div class="stat-value">{{ today_present }} <span style="font-size: 0.95rem; font-weight: normal; color: var(--text-muted);">/ {{ total_students }}</span></div>
+        <p class="form-help" style="margin-top: 4px;">
+            {% if total_students > 0 %}
+                {{ "%.1f"|format((today_present / total_students) * 100) }}% attendance rate
+            {% else %}
+                No students registered yet
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- CSV Upload Card -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2 class="card-title" style="font-size: 1.15rem;">Upload Student Roster (CSV)</h2>
+                <p class="card-subtitle">Batch register or update students using a CSV file</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.upload_students') }}" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="students_file">Select CSV File</label>
+                <input type="file" id="students_file" name="students_file" accept=".csv,text/csv" required>
+                <p class="form-help">
+                    Format: <strong>Column 1 = rollnumber, Column 2 = email_id</strong><br>
+                    Existing records are automatically updated. Duplicates are handled gracefully.
+                </p>
+            </div>
+
+            <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 10px; margin-bottom: 16px; font-family: monospace; font-size: 0.825rem; color: #475569;">
+                <strong>Sample CSV Format:</strong><br>
+                rollnumber,email_id<br>
+                21CS101,student1@college.edu<br>
+                21CS102,student2@college.edu
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">📤 Upload & Sync Students</button>
+        </form>
+    </div>
+
+    <!-- Geofence Info Card -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2 class="card-title" style="font-size: 1.15rem;">Active Geofence Parameters</h2>
+                <p class="card-subtitle">Attendance is accepted only within this zone</p>
+            </div>
+        </div>
+
+        {% if settings %}
+            <table style="font-size: 0.9rem;">
+                <tr>
+                    <td style="font-weight: 600; width: 40%;">College Name</td>
+                    <td>{{ settings.college_name }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600;">Admin Email</td>
+                    <td>{{ settings.admin_email }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600;">Center Latitude</td>
+                    <td><code>{{ settings.latitude }}</code></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600;">Center Longitude</td>
+                    <td><code>{{ settings.longitude }}</code></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600;">Allowed Radius</td>
+                    <td><span class="badge" style="background: #e0f2fe; color: #0369a1;">{{ settings.radius_meters }} meters</span></td>
+                </tr>
+            </table>
+            <div style="margin-top: 16px; text-align: right;">
+                <a href="{{ url_for('admin.setup') }}" class="btn btn-secondary btn-sm">Edit Geofence Settings</a>
+            </div>
+        {% else %}
+            <div class="alert alert-warning">
+                No college geofence settings found. Please configure the campus coordinates.
+            </div>
+            <a href="{{ url_for('admin.setup') }}" class="btn btn-primary btn-sm">Go to Geofence Setup</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Registered Students Table -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title" style="font-size: 1.2rem;">Registered Students ({{ total_students }})</h2>
+            <p class="card-subtitle">Roster of accounts eligible to request magic login links and mark attendance</p>
+        </div>
+    </div>
+
+    {% if students %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">#</th>
+                        <th>Roll Number</th>
+                        <th>Email Address</th>
+                        <th>Today's Status ({{ today }})</th>
+                        <th>Total Present</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td><strong>{{ student.roll_number }}</strong></td>
+                            <td>{{ student.email }}</td>
+                            <td>
+                                {% if student.today_status == 'Present' %}
+                                    <span class="badge badge-present">✓ Present</span>
+                                {% else %}
+                                    <span class="badge badge-absent">Not Marked</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ student.total_attended }} day(s)</td>
+                            <td style="text-align: right;">
+                                <form method="POST" action="{{ url_for('admin.delete_student', student_id=student.id) }}" style="display: inline;" onsubmit="return confirm('Remove student {{ student.roll_number }}?');">
+                                    <button type="submit" class="btn btn-danger btn-sm" style="padding: 3px 8px; font-size: 0.775rem;">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">📋</div>
+            <h3 style="color: var(--text-main); margin-bottom: 6px;">No Students Registered Yet</h3>
+            <p>Upload a <code>students.csv</code> file above to populate the student roster.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

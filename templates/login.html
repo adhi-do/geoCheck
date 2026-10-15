@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Workbase - Student Login{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 40px auto;">
+    <div class="card">
+        <div class="card-header" style="text-align: center; display: block; border-bottom: none; margin-bottom: 10px;">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">🔐</div>
+            <h1 class="card-title" style="font-size: 1.5rem;">Student Portal Login</h1>
+            <p class="card-subtitle">Passwordless Authentication via Magic Link</p>
+        </div>
+
+        {% if magic_sent %}
+            <div style="text-align: center; padding: 20px 10px;">
+                <div class="alert alert-success" style="display: block; text-align: left;">
+                    <strong style="display: block; margin-bottom: 4px;">✉️ Magic Link Dispatched!</strong>
+                    We've generated a secure single-use sign-in link and sent it to <strong>{{ user_email }}</strong>.
+                    It will remain valid for <strong>15 minutes</strong>.
+                </div>
+
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin: 20px 0;">
+                    Please check your email inbox (and your spam folder). Click the link in the email to automatically sign in to your attendance dashboard.
+                </p>
+
+                {% if dev_magic_link %}
+                    <div style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 14px; margin: 20px 0; text-align: left;">
+                        <strong style="color: #92400e; font-size: 0.85rem; display: block; margin-bottom: 6px;">
+                            🛠️ Dev / Testing Shortcut (SMTP password unset in .env):
+                        </strong>
+                        <p style="font-size: 0.825rem; color: #78350f; word-break: break-all; margin-bottom: 10px;">
+                            Click below to authenticate immediately without opening email:
+                        </p>
+                        <a href="{{ dev_magic_link }}" class="btn btn-primary btn-sm btn-block">
+                            🚀 Sign In With Test Magic Link
+                        </a>
+                    </div>
+                {% endif %}
+
+                <a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-sm" style="margin-top: 10px;">
+                    ← Request Another Link
+                </a>
+            </div>
+        {% else %}
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <div class="form-group">
+                    <label for="identifier">Roll Number or Registered Email</label>
+                    <input 
+                        type="text" 
+                        id="identifier" 
+                        name="identifier" 
+                        placeholder="e.g. 21CS101 or student@college.edu" 
+                        required 
+                        autofocus
+                    >
+                    <p class="form-help">
+                        Enter the Roll Number or Email assigned to you in the college student roster.
+                    </p>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 24px; padding: 12px;">
+                    ✨ Send Magic Login Link
+                </button>
+            </form>
+
+            <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-muted); text-align: center;">
+                <p>
+                    <strong>Note:</strong> Students cannot register manually.<br>
+                    Accounts are provisioned by the administrator via CSV upload.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

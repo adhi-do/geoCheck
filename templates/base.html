@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Workbase Attendance{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="navbar">
+        <a href="{{ url_for('index') }}" class="nav-brand">
+            📍 Workbase
+        </a>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('admin.dashboard') }}">Admin Dashboard</a></li>
+            <li><a href="{{ url_for('admin.setup') }}">Geofence Setup</a></li>
+            {% if session.get('user_id') %}
+                <li><a href="{{ url_for('student.dashboard') }}">My Attendance</a></li>
+                <li><span class="nav-user">{{ session.get('roll_number') }}</span></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('auth.login') }}">Student Login</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="container">
+        <!-- Flash Notifications -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'message' else 'info' }}">
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        &copy; {{ now_year if now_year else '2026' }} Workbase Attendance System &bull; Geofenced Smart Attendance
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
