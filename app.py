@@ -45,5 +45,8 @@ def student_dashboard_redirect():
 
 
 if __name__ == "__main__":
+    # Host on 0.0.0.0 so the application accepts connections inside cloud containers (Render, Docker, etc.)
     port = int(os.getenv("PORT", 5001))
-    app.run(debug=True, host="127.0.0.1", port=port)
+    is_cloud = os.getenv("RENDER") is not None or os.getenv("PORT") is not None
+    debug_flag = not is_cloud and os.getenv("FLASK_DEBUG", "0").lower() in ("true", "1")
+    app.run(debug=debug_flag, host="0.0.0.0", port=port)
